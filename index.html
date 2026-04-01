@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COTRINFLIX - Segurança da Informação</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Framer Motion (via CDN) -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #141414; color: white; margin: 0; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // Icons mapping for Lucide
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (iconRef.current) {
+                    lucide.createIcons({
+                        attrs: {
+                            stroke: "currentColor",
+                            "stroke-width": 2,
+                            "stroke-linecap": "round",
+                            "stroke-linejoin": "round",
+                            width: size,
+                            height: size
+                        },
+                        nameAttr: "data-lucide",
+                        icons: { [name]: lucide.icons[name] }
+                    });
+                }
+            }, [name, size]);
+            return <i data-lucide={name} className={className} ref={iconRef}></i>;
+        };
+
+        const threatsData = [
+            { title: "Phishing", category: "Ameaça", description: "E-mails ou mensagens que se passam por fontes confiáveis para roubar informações confidenciais. A isca mais comum e eficaz.", image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Baiting (Isca)", category: "Ameaça", description: "Uma oferta tentadora (um download gratuito, um pen drive 'achado') que esconde um malware. A curiosidade pode custar caro.", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Tailgating", category: "Ameaça", description: "Seguir uma pessoa autorizada para entrar em uma área restrita, física ou digitalmente (ex: usar um computador desbloqueado).", image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Pretexting", category: "Ameaça", description: "O golpista cria um cenário falso (pretexto) para extrair informações. Ele se apresenta como a pessoa certa para 'resolver' um problema que ele mesmo inventou.", image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Quid Pro Quo", category: "Ameaça", description: "Algo por algo. O hacker oferece um bem ou serviço (ex: ajuda técnica) em troca de suas credenciais ou informações.", image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Scareware", category: "Ameaça", description: "Falsos avisos de segurança que te assustam para que você baixe um malware ou pague por um software inútil. Usa o medo como principal arma.", image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Watering Hole", category: "Ameaça", description: "O hacker infecta um site legítimo que suas vítimas frequentam, esperando que elas 'bebam da água envenenada'.", image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=400&h=600" }
+        ];
+
+        const defenseData = [
+            { title: "Desconfie Sempre", category: "Defesa", description: "Verifique o remetente e o domínio do link antes de clicar. Passe o mouse sobre o link para ver o endereço real.", image: "https://images.unsplash.com/photo-1508704019882-f9cf40e475b4?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Valide por Outro Canal", category: "Defesa", description: "Recebeu um pedido urgente do seu chefe por e-mail? Confirme por telefone ou mensagem em um número que você já tenha salvo.", image: "https://images.unsplash.com/photo-1523961131990-5ea7c61b2107?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Cuidado com Anexos", category: "Defesa", description: "Nunca abra anexos não solicitados, especialmente arquivos .zip, .exe ou .scr. Podem ser a porta de entrada para malwares.", image: "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Senhas Fortes", category: "Defesa", description: "Use senhas complexas e diferentes para cada serviço. Um gerenciador de senhas pode ajudar. Ative sempre a autenticação de dois fatores (2FA).", image: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Reduza sua Exposição", category: "Defesa", description: "Tenha cuidado com as informações que você compartilha em redes sociais. Golpistas usam esses dados para personalizar ataques.", image: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&q=80&w=400&h=600" },
+            { title: "Siga as Políticas", category: "Defesa", description: "Mantenha seus sistemas atualizados e siga as orientações de segurança da empresa. Elas existem para proteger você e a todos.", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=400&h=600" }
+        ];
+
+        const quizData = [
+            {
+                question: "Você recebe um e-mail do 'banco' dizendo que sua conta foi comprometida e você precisa clicar em um link para redefinir sua senha imediatamente. O que isso provavelmente é?",
+                options: ["Um aviso legítimo de segurança", "Phishing", "Baiting"],
+                answer: "Phishing"
+            },
+            {
+                question: "Um pop-up alarmante aparece dizendo 'VÍRUS DETECTADO! CLIQUE AQUI PARA REMOVER'. Esta é uma tática de qual tipo de ataque?",
+                options: ["Pretexting", "Scareware", "Tailgating"],
+                answer: "Scareware"
+            },
+            {
+                question: "Um colega de outro departamento liga e pede sua senha para 'fazer uma atualização urgente' no seu sistema. Isso é um exemplo de:",
+                options: ["Watering Hole", "Quid Pro Quo", "Tailgating"],
+                answer: "Quid Pro Quo"
+            }
+        ];
+
+        function SecurityGuide() {
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [quizAnswers, setQuizAnswers] = useState({});
+            const [showResults, setShowResults] = useState(false);
+            const [isScrolled, setIsScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const handleQuizSelect = (questionIndex, option) => {
+                if (showResults) return;
+                setQuizAnswers(prev => ({ ...prev, [questionIndex]: option }));
+            };
+
+            const calculateScore = () => {
+                let score = 0;
+                quizData.forEach((q, i) => {
+                    if (quizAnswers[i] === q.answer) score++;
+                });
+                return score;
+            };
+
+            const Carousel = ({ title, data }) => {
+                const scrollRef = useRef(null);
+                const scroll = (direction) => {
+                    if (scrollRef.current) {
+                        const { scrollLeft, clientWidth, scrollWidth } = scrollRef.current;
+                        const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+                        if (direction === 'right' && scrollLeft + clientWidth >= scrollWidth - 10) {
+                            scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else if (direction === 'left' && scrollLeft <= 10) {
+                            scrollRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' });
+                        } else {
+                            scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+                        }
+                    }
+                };
+
+                return (
+                    <div className="space-y-4 group/carousel relative">
+                        <h3 className="text-xl md:text-2xl font-bold px-4 md:px-12">{title}</h3>
+                        <div className="relative">
+                            <button onClick={() => scroll('left')} className="absolute left-0 top-0 bottom-0 z-20 w-12 bg-black/50 opacity-0 group-hover/carousel:opacity-100 transition-opacity flex items-center justify-center hover:bg-black/70">
+                                <Icon name="ChevronLeft" size={40} />
+                            </button>
+                            <div ref={scrollRef} className="flex overflow-x-auto scrollbar-hide space-x-2 px-4 md:px-12 pb-8 pt-4">
+                                {data.map((item, i) => (
+                                    <motion.div key={i} whileHover={{ scale: 1.05, zIndex: 10 }} onClick={() => setSelectedItem(item)} className="flex-none w-40 md:w-56 aspect-[2/3] bg-[#181818] rounded-md overflow-hidden cursor-pointer shadow-lg relative group">
+                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                            <p className="text-sm font-bold">{item.title}</p>
+                                            <p className="text-[10px] text-gray-300">{item.category}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                            <button onClick={() => scroll('right')} className="absolute right-0 top-0 bottom-0 z-20 w-12 bg-black/50 opacity-0 group-hover/carousel:opacity-100 transition-opacity flex items-center justify-center hover:bg-black/70">
+                                <Icon name="ChevronRight" size={40} />
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#e50914]">
+                    <nav className={`fixed top-0 w-full z-50 transition-colors duration-300 px-4 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-black' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
+                        <div className="flex items-center space-x-8">
+                            <h1 className="text-2xl md:text-3xl font-bold text-[#e50914] tracking-tighter">COTRINFLIX</h1>
+                            <div className="hidden md:flex space-x-5 text-sm font-medium text-gray-300">
+                                <a href="#home" className="hover:text-white transition-colors">Início</a>
+                                <a href="#threats" className="hover:text-white transition-colors">Ameaças</a>
+                                <a href="#defense" className="hover:text-white transition-colors">Defesas</a>
+                                <a href="#quiz" className="hover:text-white transition-colors">Quiz</a>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <section id="home" className="relative h-[80vh] md:h-[90vh] w-full flex items-center px-4 md:px-12 overflow-hidden">
+                        <div className="absolute inset-0 z-0">
+                            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-10" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent z-10" />
+                            <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=1920&h=1080" className="w-full h-full object-cover" alt="Hero" />
+                        </div>
+                        <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="relative z-20 max-w-2xl space-y-6">
+                            <div className="flex items-center space-x-2 text-[#e50914]">
+                                <Icon name="Shield" size={24} />
+                                <span className="font-bold tracking-widest text-sm">ORIGINAL COTRINFLIX</span>
+                            </div>
+                            <h2 className="text-4xl md:text-7xl font-extrabold leading-none">SEU COMPUTADOR FOI HACKEADO</h2>
+                            <p className="text-lg md:text-xl text-gray-200 max-w-lg">A maior vulnerabilidade não está no seu sistema, mas na sua confiança. Aprenda a reconhecer os sinais e a se proteger contra a manipulação psicológica.</p>
+                            <div className="flex space-x-4 pt-4">
+                                <button className="flex items-center space-x-2 bg-white text-black px-8 py-2.5 rounded font-bold hover:bg-white/90 transition-colors">
+                                    <Icon name="Play" size={20} className="fill-current" />
+                                    <span>Cotrinflix</span>
+                                </button>
+                                <button className="flex items-center space-x-2 bg-gray-500/50 text-white px-8 py-2.5 rounded font-bold hover:bg-gray-500/70 transition-colors backdrop-blur-md">
+                                    <Icon name="Info" size={20} />
+                                    <span>Saiba mais</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    </section>
+
+                    <main className="relative z-20 -mt-32 space-y-12 pb-20">
+                        <section id="threats"><Carousel title="Catálogo de Ameaças" data={threatsData} /></section>
+                        <section id="defense"><Carousel title="Protocolos de Defesa" data={defenseData} /></section>
+
+                        <section id="breach" className="px-4 md:px-12">
+                            <div className="bg-gradient-to-br from-red-900/40 to-black border border-red-900/50 rounded-xl p-8 md:p-12 space-y-8">
+                                <div className="text-center space-y-4">
+                                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }} className="inline-block">
+                                        <Icon name="AlertTriangle" size={64} className="text-[#e50914] mx-auto" />
+                                    </motion.div>
+                                    <h2 className="text-3xl md:text-5xl font-black text-[#e50914]">VIOLAÇÃO DETECTADA?</h2>
+                                    <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">Você clicou em um link suspeito ou notou algo estranho? <span className="text-white font-bold">Não entre em pânico. Aja Rápido.</span></p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {[
+                                        { step: "1", title: "Desconecte-se", desc: "Desconecte o dispositivo da rede (Wi-Fi ou cabo) imediatamente para impedir a propagação." },
+                                        { step: "2", title: "Mude sua Senha", desc: "Em um dispositivo seguro, altere a senha da conta afetada e ative o 2FA." },
+                                        { step: "3", title: "Comunique TI", desc: "Informe o departamento de TI sobre o incidente. A rapidez é sua melhor defesa." }
+                                    ].map((item, i) => (
+                                        <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">
+                                            <span className="text-4xl font-black text-[#e50914]/50 mb-4 block">{item.step}</span>
+                                            <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                                            <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="quiz" className="px-4 md:px-12">
+                            <div className="max-w-4xl mx-auto bg-[#181818] rounded-xl p-8 md:p-12 shadow-2xl border border-white/5">
+                                <div className="flex items-center space-x-4 mb-8">
+                                    <div className="p-3 bg-[#e50914] rounded-full"><Icon name="Lock" size={24} /></div>
+                                    <h2 className="text-3xl font-bold">Teste Seus Conhecimentos</h2>
+                                </div>
+                                <div className="space-y-8">
+                                    {quizData.map((q, i) => (
+                                        <div key={i} className="space-y-4">
+                                            <p className="text-lg font-medium text-gray-200">{i + 1}. {q.question}</p>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {q.options.map((option, j) => {
+                                                    const isSelected = quizAnswers[i] === option;
+                                                    const isCorrect = option === q.answer;
+                                                    let bgColor = "bg-white/5 border-white/10 hover:bg-white/10";
+                                                    if (showResults) {
+                                                        if (isCorrect) bgColor = "bg-green-500/20 border-green-500/50 text-green-400";
+                                                        else if (isSelected) bgColor = "bg-red-500/20 border-red-500/50 text-red-400";
+                                                    } else if (isSelected) {
+                                                        bgColor = "bg-[#e50914]/20 border-[#e50914]/50 text-white";
+                                                    }
+                                                    return (
+                                                        <button key={j} onClick={() => handleQuizSelect(i, option)} className={`text-left p-4 rounded-lg border transition-all duration-200 flex items-center justify-between ${bgColor}`}>
+                                                            <span>{option}</span>
+                                                            {showResults && isCorrect && <Icon name="CheckCircle2" size={20} />}
+                                                            {showResults && isSelected && !isCorrect && <Icon name="XCircle" size={20} />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-12 text-center space-y-6">
+                                    {!showResults ? (
+                                        <button onClick={() => setShowResults(true)} disabled={Object.keys(quizAnswers).length < quizData.length} className="bg-[#e50914] hover:bg-[#f40612] text-white font-bold py-3 px-12 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Verificar Respostas</button>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <p className="text-2xl font-bold">Resultado: <span className="text-[#e50914]">{calculateScore()} / {quizData.length}</span></p>
+                                            <button onClick={() => { setShowResults(false); setQuizAnswers({}); }} className="text-gray-400 hover:text-white underline text-sm">Tentar novamente</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <AnimatePresence>
+                        {selectedItem && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedItem(null)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                                <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative z-10 w-full max-w-2xl bg-[#181818] rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="relative aspect-video">
+                                        <img src={selectedItem.image} className="w-full h-full object-cover" alt={selectedItem.title} />
+                                        <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors">
+                                            <Icon name="XCircle" size={24} />
+                                        </button>
+                                        <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-[#181818] to-transparent">
+                                            <h2 className="text-4xl font-bold">{selectedItem.title}</h2>
+                                        </div>
+                                    </div>
+                                    <div className="p-8 space-y-6">
+                                        <div className="flex items-center space-x-4 text-sm font-bold">
+                                            <span className="text-green-400">98% Relevante</span>
+                                            <span className="text-gray-400">2024</span>
+                                            <span className="border border-gray-600 px-1.5 rounded text-[10px] text-gray-400">18+</span>
+                                            <span className="text-gray-400">HD</span>
+                                        </div>
+                                        <p className="text-lg text-gray-300 leading-relaxed">{selectedItem.description}</p>
+                                        <div className="flex space-x-4">
+                                            <button className="flex items-center space-x-2 bg-white text-black px-8 py-2 rounded font-bold hover:bg-white/90 transition-colors">
+                                                <Icon name="Play" size={20} className="fill-current" />
+                                                <span>Cotrinflix</span>
+                                            </button>
+                                            <button className="p-2 border border-gray-500 rounded-full hover:border-white transition-colors">
+                                                <Icon name="Plus" size={24} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+
+                    <footer className="border-t border-gray-800 py-12 px-4 md:px-12 text-center text-sm text-gray-500">
+                        <div className="max-w-5xl mx-auto space-y-4">
+                            <p className="hover:underline cursor-pointer">Dúvidas? Ligue 0800 591 8942</p>
+                            <p>&copy; 2026 COTRINFLIX Originals. Uma produção de Segurança da Informação.</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SecurityGuide />);
+    </script>
+</body>
+</html>
